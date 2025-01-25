@@ -37,13 +37,19 @@ def populate_vote_list(frame, votes, app_controller):
         
         command = None
     
+
+        print(f"REMINDER: {app_controller.isSettingUpReminder}")
         if user_vote_status and 'option_ref' in user_vote_status:  # If user has voted
             bg_color = "#bf80ff"  # Purple for voted
+            if app_controller.isSettingUpReminder:
+                command = lambda v=vote: on_vote_click(v, app_controller)
         elif voting_end_date < current_date:
             bg_color = "#ff4d4d"  # Red for ended voting
         else:
             bg_color = "#80b3ff"  # Blue for active voting and not yet voted
             command = lambda v=vote: on_vote_click(v, app_controller)
+
+
         button = tk.Button(
             frame,
             text=f"{vote['title']} | do: {voting_end_date } | zagłosowało {vote['votes']}",
@@ -62,7 +68,10 @@ def on_vote_click(vote, app_controller):
     print(f"Wybrano: {vote['id']}")
     app_controller.chosenVotingId = vote['id']
     # Here you can switch to another screen, for example:
-    app_controller.switch_to("voteDetails")  # Assuming this screen exists
+    if app_controller.isSettingUpReminder:
+        app_controller.switch_to("reminderConfig")
+    else:
+        app_controller.switch_to("voteDetails")
 
 def show_votings_list_screen(root, app_controller):
     """Votings list screen."""
@@ -88,7 +97,10 @@ def show_votings_list_screen(root, app_controller):
     scrollbar.pack(side="right", fill="y")
 
     # Fetch the voting data from Firestore and populate the list
-    votes_data = fetch_votes_from_db(app_controller.userId)
+    if app_controller.isSettingUpReminder:
+        votes_data = fetch_votes_from_db(app_controller.userId, True)
+    else:
+        votes_data = fetch_votes_from_db(app_controller.userId, False)
     populate_vote_list(scrollable_frame, votes_data, app_controller)
 
     button_canvas = tk.Canvas(root, width=600, height=100, bg="#d9b3ff", highlightthickness=0)

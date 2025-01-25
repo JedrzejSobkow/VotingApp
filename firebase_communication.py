@@ -149,24 +149,31 @@ def fetch_user_vote_status(voting_id, user_id):
     return None  # Zwraca None, jeśli użytkownik nie głosował
 
 
-def fetch_votes_from_db(user_id=None):
+def fetch_votes_from_db(user_id=None, is_author=False):
     """Fetches voting data from Firestore and calculates stats."""
     votes = []
     try:
         if user_id:
             # Pobierz referencję do użytkownika
             user_ref = db.collection("users").document(user_id)
-            
-            # Pobierz dokumenty z kolekcji "votes", gdzie "user_ref" odpowiada podanemu użytkownikowi
-            user_votes_query = db.collection("votes").where("user_ref", "==", user_ref)
-            user_votes = [vote.to_dict() for vote in user_votes_query.stream()]
+            all_votings_ref = db.collection("votings")
 
-            # Pobierz głosowania związane z użytkownikiem
-            voting_ids = {vote["voting_ref"].id for vote in user_votes}  # Zbiór ID głosowań
-            votings_ref = db.collection("votings")
+            if not is_author:
+            # Pobierz dokumenty z kolekcji "votes", gdzie "user_ref" odpowiada podanemu użytkownikowi
+                user_votes_query = db.collection("votes").where("user_ref", "==", user_ref)
+                user_votes = [vote.to_dict() for vote in user_votes_query.stream()]
+
+                # Pobierz głosowania związane z użytkownikiem
+                voting_ids = {vote["voting_ref"].id for vote in user_votes}  # Zbiór ID głosowań
+
+            else:
+                votings_ref = db.collection("votings").where("author_ref", "==", user_ref)
+                votings_docs = votings_ref.stream()
+                voting_ids = [voting_doc.id for voting_doc in votings_docs]
+
 
             for voting_id in voting_ids:
-                voting_doc = votings_ref.document(voting_id).get()
+                voting_doc = all_votings_ref.document(voting_id).get()
                 if voting_doc.exists:
                     voting_data = voting_doc.to_dict()
                     voting_data["id"] = voting_doc.id
@@ -175,6 +182,7 @@ def fetch_votes_from_db(user_id=None):
                     users_voted, total_users = fetch_vote_stats(voting_doc.id)
                     voting_data["votes"] = f"{users_voted}/{total_users}"
                     votes.append(voting_data)
+                
         else:
             # Pobierz wszystkie głosowania, jeśli nie podano user_id
             votes_ref = db.collection("votings")
@@ -191,6 +199,27 @@ def fetch_votes_from_db(user_id=None):
         print(f"Błąd podczas pobierania głosowań: {e}")
     return votes
 
+
+def update_voting_with_reminder(interval, start_date_val, end_date_val, method, votingId):
+    try:
+        # Pobierz referencję do dokumentu głosowania o wybranym ID
+        voting_ref = db.collection("votings").document(votingId)
+
+        # Przygotuj dane do zaktualizowania
+        reminder_data = {
+            "interval": interval,
+            "start_date": start_date_val,
+            "end_date": end_date_val,
+            "method": method
+        }
+
+        # Zaktualizuj dokument w kolekcji "votings"
+        voting_ref.update(reminder_data)
+
+        print(f"Głosowanie {app_controller.chosenVotingId} zostało zaktualizowane z nowymi danymi powiadomienia.")
+
+    except Exception as e:
+        print(f"Błąd podczas aktualizacji głosowania: {e}")
 
 
 def fetch_vote_data(voting_id):
