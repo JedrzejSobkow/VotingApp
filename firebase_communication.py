@@ -312,3 +312,66 @@ def get_user_data(user_id):
     except Exception as e:
         print(f"Error fetching user data: {e}")
         return None
+    
+
+def get_voting_details(voting_id):
+    db = firestore.client()
+    voting_doc = db.collection("votings").document(voting_id).get()
+    votes_cast, total_users = fetch_vote_stats(voting_id)
+    if voting_doc.exists:
+        voting_data = voting_doc.to_dict()
+        return {
+            "title": voting_data["title"],
+            "deadline": voting_data["deadline"],
+            "author": voting_data["author_ref"],  # Możesz zamienić author_ref na nazwisko, jeśli potrzebujesz dodatkowego zapytania
+            "votes_cast": votes_cast,  # Liczba oddanych głosów
+            "total_users": total_users  # Liczba użytkowników
+        }
+    return {}
+
+
+
+def get_voting_results(voting_id):
+    voting_ref = db.collection("votings").document(voting_id)  # Utwórz referencję na dokument głosowania
+
+    # Pobierz wszystkie opcje związane z danym głosowaniem
+    options_ref = db.collection("options").where("voting_id", "==", voting_ref)
+    options_docs = options_ref.stream()
+
+    # Pobierz wszystkie głosy związane z danym głosowaniem
+    votes_ref = db.collection("votes").where("voting_ref", "==", voting_ref)
+    votes_docs = votes_ref.stream()
+
+    # Zlicz głosy na każdą opcję
+    vote_counts = {}
+    total_votes = 0
+
+    for vote in votes_docs:
+        vote_data = vote.to_dict()
+        option_ref = vote_data.get("option_ref")  # Pobierz referencję na opcję
+        if option_ref:
+            option_id = option_ref.id  # ID opcji, na którą oddano głos
+            vote_counts[option_id] = vote_counts.get(option_id, 0) + 1
+            total_votes += 1
+
+    # Przygotuj wyniki
+    results = []
+    max_votes = max(vote_counts.values(), default=0)  # Największa liczba głosów dla wygranych opcji
+
+    for option in options_docs:
+        option_data = option.to_dict()
+        option_id = option.id
+        votes_for_option = vote_counts.get(option_id, 0)  # Liczba głosów oddanych na tę opcję
+        percentage = (votes_for_option / total_votes * 100) if total_votes > 0 else 0
+
+        # Ustaw kolor tła dla wygranych opcji
+        bg_color = "#99ff99" if votes_for_option == max_votes else "#ff9999"
+
+        results.append({
+            "candidate": option_data["option"],  # Nazwa opcji (np. imię i nazwisko kandydata)
+            "votes": votes_for_option,  # Liczba głosów
+            "percentage": f"{percentage:.2f}%",  # Procentowy udział głosów
+            "bg": bg_color  # Kolor tła
+        })
+
+    return results

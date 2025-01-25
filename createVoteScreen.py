@@ -140,4 +140,4 @@ def show_create_vote_screen(root, app_controller):
               command=lambda: submit(title_entry, question_entry, answers_entries, selected_date_label,
                                      is_anonymous, app_controller, selected_users)).pack(side="left", padx=10)
     tk.Button(button_frame, text="Anuluj", bg="#f3a1b4", font=("Arial", 12),
-              command=lambda: root.destroy()).pack(side="left", padx=10)
+              command=lambda: app_controller.switch_to("main")).pack(side="left", padx=10)

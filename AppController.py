@@ -5,6 +5,7 @@ from votingsListScreen import show_votings_list_screen  # Import the new votings
 from voteDetailsScreen import show_vote_screen
 from createVoteScreen import show_create_vote_screen
 from reminderConfigScreen import show_reminder_config_screen
+from viewResultsScreen import show_poll_result_screen
 # Import other screens you might have
 
 class AppController:
@@ -13,6 +14,7 @@ class AppController:
     userRole = None
     chosenVotingId = None
     isSettingUpReminder = False
+    isShowingResults = False
 
     def __init__(self):
         self.root = tk.Tk()
@@ -48,6 +50,7 @@ if __name__ == "__main__":
     app.add_screen("voteDetails", show_vote_screen)
     app.add_screen("createVoting", show_create_vote_screen)
     app.add_screen("reminderConfig", show_reminder_config_screen)
+    app.add_screen("pollResults", show_poll_result_screen)
 
 
     # Add other screens when needed

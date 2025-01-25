@@ -49,6 +49,8 @@ def populate_vote_list(frame, votes, app_controller):
             bg_color = "#80b3ff"  # Blue for active voting and not yet voted
             command = lambda v=vote: on_vote_click(v, app_controller)
 
+        if app_controller.isShowingResults:
+            command = lambda v=vote: on_vote_click(v, app_controller)
 
         button = tk.Button(
             frame,
@@ -70,6 +72,8 @@ def on_vote_click(vote, app_controller):
     # Here you can switch to another screen, for example:
     if app_controller.isSettingUpReminder:
         app_controller.switch_to("reminderConfig")
+    elif app_controller.isShowingResults:
+        app_controller.switch_to("pollResults")
     else:
         app_controller.switch_to("voteDetails")
 
@@ -97,7 +101,7 @@ def show_votings_list_screen(root, app_controller):
     scrollbar.pack(side="right", fill="y")
 
     # Fetch the voting data from Firestore and populate the list
-    if app_controller.isSettingUpReminder:
+    if app_controller.isSettingUpReminder or app_controller.isShowingResults:
         votes_data = fetch_votes_from_db(app_controller.userId, True)
     else:
         votes_data = fetch_votes_from_db(app_controller.userId, False)

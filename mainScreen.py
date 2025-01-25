@@ -22,6 +22,10 @@ def on_button_click(event, app_controller, screen_name):
     if screen_name == "reminderConfig":
         app_controller.isSettingUpReminder = True
         app_controller.switch_to("votingsList")
+    elif screen_name == "pollResults":
+        app_controller.isSettingUpReminder = False
+        app_controller.isShowingResults = True
+        app_controller.switch_to("votingsList")
     else:
         app_controller.isSettingUpReminder = False
         app_controller.switch_to(screen_name)
@@ -43,6 +47,6 @@ def show_main_screen(root, app_controller):
     if app_controller.userRole in ["host", "admin"]:
         create_rounded_button(canvas, 260, 100, "Utwórz nowe\ngłosowanie", lambda e: on_button_click(e, app_controller, "createVoting"), "#cc99ff", "#000")
         create_rounded_button(canvas, 50, 180, "Konfiguruj\nprzypomnienia", lambda e: on_button_click(e, app_controller, "reminderConfig"), "#cc99ff", "#000")
-        create_rounded_button(canvas, 260, 180, "Przeglądaj wyniki", lambda e: on_button_click(e, app_controller, "resultsScreen"), "#cc99ff", "#000")
+        create_rounded_button(canvas, 260, 180, "Przeglądaj wyniki", lambda e: on_button_click(e, app_controller, "pollResults"), "#cc99ff", "#000")
         if app_controller.userRole == "admin":
             create_rounded_button(canvas, 150, 260, "Zarządzaj kontami\nużytkowników", lambda e: on_button_click(e, app_controller, "userManagementScreen"), "#ff99cc", "#000")
