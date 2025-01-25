@@ -32,6 +32,7 @@ def on_confirm_click(event, selected_option_id, app_controller):
         save_vote(app_controller.userId, app_controller.chosenVotingId, selected_option_id)
         
         messagebox.showinfo("Potwierdzenie", "Twój głos został zapisany. Dziękujemy za udział w głosowaniu!")
+        app_controller.switch_to("main")
     except Exception as e:
         messagebox.showerror("Błąd", f"Nie udało się zapisać głosu: {e}")
 

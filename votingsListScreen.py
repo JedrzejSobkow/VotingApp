@@ -20,15 +20,17 @@ def populate_vote_list(frame, votes, app_controller):
     """Populates the frame with voting options as buttons."""
     for i, vote in enumerate(votes):
         # Check if the voting is assigned to the logged-in user
+        print(f"voting{vote}")
         user_vote_status = fetch_user_vote_status(vote['id'], app_controller.userId)
 
         # Check if the voting has ended
         voting_end_date = vote['deadline']
 
-        print(f"ROK: {voting_end_date.year}")
-        voting_end_date = datetime(year=voting_end_date.year, month=voting_end_date.month, day=voting_end_date.day,
-                hour=voting_end_date.hour, minute=voting_end_date.minute, second=voting_end_date.second)
-        # Możesz teraz używać voting_end_date do dalszych operacji, np. porównań lub formatowania
+        print(voting_end_date)
+        print(type(voting_end_date))
+
+
+        voting_end_date = datetime(year=int(voting_end_date[-4:]), month=int(voting_end_date[-7:-5]), day=int(voting_end_date[-10:-8]))        # Możesz teraz używać voting_end_date do dalszych operacji, np. porównań lub formatowania
         # formatted_deadline  = voting_end_date.strftime('%Y-%m-%d %H:%M:%S')
         current_date = datetime.now()
         print(current_date)

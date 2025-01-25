@@ -36,7 +36,7 @@ def show_main_screen(root, app_controller):
     # Create buttons and link them to screens
     create_rounded_button(canvas, 50, 100, "Pokaż głosowania\noczekujące na mój głos", lambda e: on_button_click(e, app_controller, "votingsList"), "#b3a3ff", "#000")
     if app_controller.userRole in ["host", "admin"]:
-        create_rounded_button(canvas, 260, 100, "Utwórz nowe\ngłosowanie", lambda e: on_button_click(e, app_controller, "createVotingScreen"), "#cc99ff", "#000")
+        create_rounded_button(canvas, 260, 100, "Utwórz nowe\ngłosowanie", lambda e: on_button_click(e, app_controller, "createVoting"), "#cc99ff", "#000")
         create_rounded_button(canvas, 50, 180, "Konfiguruj\nprzypomnienia", lambda e: on_button_click(e, app_controller, "reminderScreen"), "#cc99ff", "#000")
         create_rounded_button(canvas, 260, 180, "Przeglądaj wyniki", lambda e: on_button_click(e, app_controller, "resultsScreen"), "#cc99ff", "#000")
         if app_controller.userRole == "admin":

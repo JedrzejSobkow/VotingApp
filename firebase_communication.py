@@ -57,6 +57,85 @@ def fetch_vote_stats(voting_id):
 
     return users_voted, total_users
 
+def create_voting(title, question, answers, date, is_anonymous, author_id, users_to_vote):
+    """
+    Tworzy nowe głosowanie w Firestore, dodaje opcje głosowania i tworzy dokumenty `votes`
+    dla użytkowników, którzy muszą zagłosować.
+    
+    Args:
+        title (str): Tytuł głosowania.
+        question (str): Treść pytania głosowania.
+        answers (list[str]): Lista opcji odpowiedzi.
+        date (str): Data zakończenia głosowania (format "dd.mm.yyyy").
+        is_anonymous (bool): Czy głosowanie jest anonimowe.
+        author_id (str): ID autora głosowania.
+        users_to_vote (list[str]): Lista ID użytkowników, którzy muszą zagłosować.
+    
+    Returns:
+        str: ID utworzonego głosowania lub `None` w przypadku błędu.
+    """
+    try:
+        # Pobierz referencję autora
+        author_ref = db.collection("users").document(author_id)
+        
+        # Dodaj głosowanie do kolekcji "votings"
+        voting_data = {
+            "title": title,
+            "content": question,
+            "deadline": date,
+            "anon": is_anonymous,
+            "author_ref": author_ref
+        }
+        voting_ref = db.collection("votings").add(voting_data)[1]  # Pobierz referencję nowego dokumentu
+
+        # Dodaj opcje głosowania do kolekcji "options"
+        for answer in answers:
+            if answer.strip():  # Ignoruj puste odpowiedzi
+                option_data = {
+                    "option": answer.strip(),
+                    "voting_id": voting_ref
+                }
+                db.collection("options").add(option_data)
+
+        # Dodaj dokumenty do kolekcji "votes" dla każdego użytkownika
+        for user_id in users_to_vote:
+            user_ref = db.collection("users").document(user_id)
+            vote_data = {
+                "user_ref": user_ref,
+                "voting_ref": voting_ref
+            }
+            db.collection("votes").add(vote_data)
+
+        print(f"Głosowanie '{title}' zostało utworzone z ID: {voting_ref.id}")
+        return voting_ref.id  # Zwróć ID utworzonego głosowania
+    except Exception as e:
+        print(f"Błąd podczas tworzenia głosowania: {e}")
+        return None
+
+
+def get_users():
+    """
+    Pobiera listę użytkowników z kolekcji 'users' w Firestore.
+    
+    Returns:
+        List[dict]: Lista użytkowników w formacie [{"user_id": "123", "name": "Jan Kowalski"}, ...]
+    """
+    users_ref = db.collection("users")  # Kolekcja `users` w bazie danych
+    users = []
+
+    try:
+        # Pobierz dokumenty użytkowników
+        docs = users_ref.stream()
+        for doc in docs:
+            user_data = doc.to_dict()
+            users.append({
+                "user_id": doc.id,       # Pobieramy unikalny ID dokumentu jako user_id
+                "name": user_data.get("name", "Nieznane")  # Pobieramy nazwę użytkownika
+            })
+    except Exception as e:
+        print(f"Błąd podczas pobierania użytkowników: {e}")
+    
+    return users
 
 def fetch_user_vote_status(voting_id, user_id):
     """Sprawdza, czy użytkownik zagłosował w danym głosowaniu."""
