@@ -375,3 +375,45 @@ def get_voting_results(voting_id):
         })
 
     return results
+
+
+def check_email_exists(email):
+    """Sprawdza, czy użytkownik z danym adresem e-mail istnieje w bazie."""
+    db = firestore.client()
+    users_ref = db.collection("users")
+    existing_user = users_ref.where("email", "==", email).get()
+    return len(existing_user) > 0
+
+def add_new_user_to_db(name, email, hashed_password, phone, role):
+    """Dodaje nowego użytkownika do bazy danych."""
+    db = firestore.client()
+    users_ref = db.collection("users")
+    new_user = {
+        "name": name,
+        "email": email,
+        "passwordHash": hashed_password,
+        "phoneNumber": phone,
+        "role": role
+    }
+    users_ref.add(new_user)
+
+def get_users():
+    users_ref = db.collection('users')  # Kolekcja użytkowników
+    docs = users_ref.stream()
+
+    users = []
+    for doc in docs:
+        user_data = doc.to_dict()
+        users.append({
+            "name": user_data["name"],
+            "role": user_data["role"],
+            "id": doc.id  # Dodanie ID dokumentu
+        })
+    return users
+
+# 2. Funkcja usuwająca użytkownika
+def delete_user(user_id):
+    user_ref = db.collection('users').document(user_id)
+    user_ref.delete()
+    print(f"Użytkownik o ID {user_id} został usunięty.")
+    # usuwanie kaskadowe nie jest potrzeebne

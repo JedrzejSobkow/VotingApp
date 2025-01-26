@@ -1,14 +1,18 @@
 import tkinter as tk
 from tkinter import messagebox
 from firebase_communication import login_user
+import bcrypt
 
 def show_login_screen(root, app_controller):
     """Ekran logowania."""
     def on_login_click():
         email = email_entry.get()
         password = password_entry.get()
+        print(bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8'))
+        print("TUTAJ")
         if email and password:
             login_user(email, password, app_controller)  # Pass app_controller to handle screen switching
+
         else:
             messagebox.showwarning("Błąd", "Uzupełnij wszystkie pola.")
 

@@ -67,8 +67,9 @@ def populate_user_list(users_frame, selected_users):
     users = get_users()  # Pobierz użytkowników z bazy danych (funkcja musi zwracać listę słowników z 'user_id' i 'name').
 
     for user in users:
+        print(user)
         user_var = tk.BooleanVar()
-        selected_users[user['user_id']] = user_var
+        selected_users[user['id']] = user_var
         tk.Checkbutton(users_frame, text=user['name'], variable=user_var, bg="#e1e1e1", font=("Arial", 10), anchor="w").pack(fill="x", padx=5, pady=2)
 
 

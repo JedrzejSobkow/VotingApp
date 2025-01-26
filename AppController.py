@@ -6,6 +6,8 @@ from voteDetailsScreen import show_vote_screen
 from createVoteScreen import show_create_vote_screen
 from reminderConfigScreen import show_reminder_config_screen
 from viewResultsScreen import show_poll_result_screen
+from userManagementScreen import show_manage_users_screen
+from createUserScreen import show_create_user_screen
 # Import other screens you might have
 
 class AppController:
@@ -51,6 +53,9 @@ if __name__ == "__main__":
     app.add_screen("createVoting", show_create_vote_screen)
     app.add_screen("reminderConfig", show_reminder_config_screen)
     app.add_screen("pollResults", show_poll_result_screen)
+    app.add_screen("userManagement", show_manage_users_screen)    
+    app.add_screen("userCreation", show_create_user_screen)
+
 
 
     # Add other screens when needed
