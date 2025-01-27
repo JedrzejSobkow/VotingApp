@@ -8,7 +8,11 @@ firebase_admin.initialize_app(cred)
 db = firestore.client()
 
 def login_user(email, password, app_controller):
-    """Funkcja do logowania użytkownika za pomocą Firestore."""
+    """
+    Register a new user by collecting username, email, and password.
+    Encrypt the password using SHA-256 before storing it in Firestore.
+    If the username or email is already taken, show an error message.
+    """
     try:
         users_ref = db.collection("users")
         query = users_ref.where("email", "==", email).stream()
@@ -23,7 +27,6 @@ def login_user(email, password, app_controller):
 
             if bcrypt.checkpw(password.encode('utf-8'), stored_password_hash.encode('utf-8')):
                 messagebox.showinfo("Sukces", "Logowanie udane! Witaj!")
-                # Przejście do innego ekranu po udanym logowaniu
                 app_controller.userId = user.id
                 app_controller.userRole = user_data["role"]
                 app_controller.switch_to("main")
@@ -37,12 +40,19 @@ def login_user(email, password, app_controller):
         messagebox.showerror("Błąd", "Wystąpił błąd podczas logowania.")
 
 def fetch_vote_stats(voting_id):
-    """Fetches vote stats for a given voting."""
+    """
+    Fetches vote statistics for a given voting.
+    
+    Args:
+        voting_id (str): The ID of the voting.
+    
+    Returns:
+        tuple: The number of users who voted and the total number of users.
+    """
     total_users = 0
     users_voted = 0
 
     try:
-        # Query votes for the specific voting
         votes_query = db.collection("votes").where("voting_ref", "==", db.document(f"votings/{voting_id}"))
         votes = votes_query.stream()
 
@@ -59,26 +69,23 @@ def fetch_vote_stats(voting_id):
 
 def create_voting(title, question, answers, date, is_anonymous, author_id, users_to_vote):
     """
-    Tworzy nowe głosowanie w Firestore, dodaje opcje głosowania i tworzy dokumenty `votes`
-    dla użytkowników, którzy muszą zagłosować.
+    Creates a new voting in Firestore, adds voting options, and creates vote documents for users who need to vote.
     
     Args:
-        title (str): Tytuł głosowania.
-        question (str): Treść pytania głosowania.
-        answers (list[str]): Lista opcji odpowiedzi.
-        date (str): Data zakończenia głosowania (format "dd.mm.yyyy").
-        is_anonymous (bool): Czy głosowanie jest anonimowe.
-        author_id (str): ID autora głosowania.
-        users_to_vote (list[str]): Lista ID użytkowników, którzy muszą zagłosować.
+        title (str): The voting title.
+        question (str): The question being asked in the voting.
+        answers (list[str]): List of possible answers.
+        date (str): The deadline for the voting (format "dd.mm.yyyy").
+        is_anonymous (bool): Whether the voting is anonymous.
+        author_id (str): The ID of the voting author.
+        users_to_vote (list[str]): List of user IDs who need to vote.
     
     Returns:
-        str: ID utworzonego głosowania lub `None` w przypadku błędu.
+        str: The ID of the created voting, or `None` in case of an error.
     """
     try:
-        # Pobierz referencję autora
         author_ref = db.collection("users").document(author_id)
         
-        # Dodaj głosowanie do kolekcji "votings"
         voting_data = {
             "title": title,
             "content": question,
@@ -86,18 +93,16 @@ def create_voting(title, question, answers, date, is_anonymous, author_id, users
             "anon": is_anonymous,
             "author_ref": author_ref
         }
-        voting_ref = db.collection("votings").add(voting_data)[1]  # Pobierz referencję nowego dokumentu
+        voting_ref = db.collection("votings").add(voting_data)[1]  
 
-        # Dodaj opcje głosowania do kolekcji "options"
         for answer in answers:
-            if answer.strip():  # Ignoruj puste odpowiedzi
+            if answer.strip():  
                 option_data = {
                     "option": answer.strip(),
                     "voting_id": voting_ref
                 }
                 db.collection("options").add(option_data)
 
-        # Dodaj dokumenty do kolekcji "votes" dla każdego użytkownika
         for user_id in users_to_vote:
             user_ref = db.collection("users").document(user_id)
             vote_data = {
@@ -107,7 +112,7 @@ def create_voting(title, question, answers, date, is_anonymous, author_id, users
             db.collection("votes").add(vote_data)
 
         print(f"Głosowanie '{title}' zostało utworzone z ID: {voting_ref.id}")
-        return voting_ref.id  # Zwróć ID utworzonego głosowania
+        return voting_ref.id  
     except Exception as e:
         print(f"Błąd podczas tworzenia głosowania: {e}")
         return None
@@ -115,22 +120,21 @@ def create_voting(title, question, answers, date, is_anonymous, author_id, users
 
 def get_users():
     """
-    Pobiera listę użytkowników z kolekcji 'users' w Firestore.
+    Fetches the list of users from the 'users' collection in Firestore.
     
     Returns:
-        List[dict]: Lista użytkowników w formacie [{"user_id": "123", "name": "Jan Kowalski"}, ...]
+        List[dict]: List of users in the format [{"user_id": "123", "name": "John Doe"}, ...]
     """
-    users_ref = db.collection("users")  # Kolekcja `users` w bazie danych
+    users_ref = db.collection("users")  
     users = []
 
     try:
-        # Pobierz dokumenty użytkowników
         docs = users_ref.stream()
         for doc in docs:
             user_data = doc.to_dict()
             users.append({
-                "user_id": doc.id,       # Pobieramy unikalny ID dokumentu jako user_id
-                "name": user_data.get("name", "Nieznane")  # Pobieramy nazwę użytkownika
+                "user_id": doc.id,       
+                "name": user_data.get("name", "Nieznane")  
             })
     except Exception as e:
         print(f"Błąd podczas pobierania użytkowników: {e}")
@@ -138,33 +142,46 @@ def get_users():
     return users
 
 def fetch_user_vote_status(voting_id, user_id):
-    """Sprawdza, czy użytkownik zagłosował w danym głosowaniu."""
-    # Pobieramy dokument z kolekcji "votes", gdzie user_ref odnosi się do userId
+    """
+    Checks if a user has voted in a given voting.
+    
+    Args:
+        voting_id (str): The voting ID.
+        user_id (str): The user ID.
+    
+    Returns:
+        dict or None: The vote document if the user has voted, or None if they haven't.
+    """
     votes_ref = db.collection("votes")
     user_vote_query = votes_ref.where("user_ref", "==", db.collection("users").document(user_id)) \
                                 .where("voting_ref", "==", db.collection("votings").document(voting_id))
-     # Sprawdzamy, czy użytkownik zagłosował (czy jest obecne pole "option_ref")
     for vote_doc in user_vote_query.stream():
-        return vote_doc.to_dict()  # Zwraca dane dokumentu, w tym "option_ref" jeśli użytkownik zagłosował
-    return None  # Zwraca None, jeśli użytkownik nie głosował
+        return vote_doc.to_dict() 
+    return None 
 
 
 def fetch_votes_from_db(user_id=None, is_author=False):
-    """Fetches voting data from Firestore and calculates stats."""
+    """
+    Fetches voting data from Firestore and calculates statistics.
+    
+    Args:
+        user_id (str or None): The user ID, if filtering by user.
+        is_author (bool): Whether to fetch votings authored by the user.
+    
+    Returns:
+        List[dict]: List of voting data with stats.
+    """
     votes = []
     try:
         if user_id:
-            # Pobierz referencję do użytkownika
             user_ref = db.collection("users").document(user_id)
             all_votings_ref = db.collection("votings")
 
             if not is_author:
-            # Pobierz dokumenty z kolekcji "votes", gdzie "user_ref" odpowiada podanemu użytkownikowi
                 user_votes_query = db.collection("votes").where("user_ref", "==", user_ref)
                 user_votes = [vote.to_dict() for vote in user_votes_query.stream()]
 
-                # Pobierz głosowania związane z użytkownikiem
-                voting_ids = {vote["voting_ref"].id for vote in user_votes}  # Zbiór ID głosowań
+                voting_ids = {vote["voting_ref"].id for vote in user_votes}  
 
             else:
                 votings_ref = db.collection("votings").where("author_ref", "==", user_ref)
@@ -178,19 +195,16 @@ def fetch_votes_from_db(user_id=None, is_author=False):
                     voting_data = voting_doc.to_dict()
                     voting_data["id"] = voting_doc.id
 
-                    # Oblicz statystyki głosowania
                     users_voted, total_users = fetch_vote_stats(voting_doc.id)
                     voting_data["votes"] = f"{users_voted}/{total_users}"
                     votes.append(voting_data)
                 
         else:
-            # Pobierz wszystkie głosowania, jeśli nie podano user_id
             votes_ref = db.collection("votings")
             for doc in votes_ref.stream():
                 voting_data = doc.to_dict()
                 voting_data["id"] = doc.id
 
-                # Oblicz statystyki głosowania
                 users_voted, total_users = fetch_vote_stats(doc.id)
                 voting_data["votes"] = f"{users_voted}/{total_users}"
                 votes.append(voting_data)
@@ -201,11 +215,22 @@ def fetch_votes_from_db(user_id=None, is_author=False):
 
 
 def update_voting_with_reminder(interval, start_date_val, end_date_val, method, votingId):
+    """
+    Updates a voting with reminder settings.
+    
+    Args:
+        interval (str): The interval for the reminder.
+        start_date_val (str): The start date of the reminder.
+        end_date_val (str): The end date of the reminder.
+        method (str): The method for the reminder (e.g., email, push).
+        votingId (str): The voting ID.
+    
+    Returns:
+        None
+    """
     try:
-        # Pobierz referencję do dokumentu głosowania o wybranym ID
         voting_ref = db.collection("votings").document(votingId)
 
-        # Przygotuj dane do zaktualizowania
         reminder_data = {
             "interval": interval,
             "start_date": start_date_val,
@@ -213,19 +238,24 @@ def update_voting_with_reminder(interval, start_date_val, end_date_val, method, 
             "method": method
         }
 
-        # Zaktualizuj dokument w kolekcji "votings"
         voting_ref.update(reminder_data)
 
-        print(f"Głosowanie {app_controller.chosenVotingId} zostało zaktualizowane z nowymi danymi powiadomienia.")
 
     except Exception as e:
         print(f"Błąd podczas aktualizacji głosowania: {e}")
 
 
 def fetch_vote_data(voting_id):
-    """Fetch voting data and options from Firestore."""
+    """
+    Fetches the voting data and options from Firestore.
+    
+    Args:
+        voting_id (str): The ID of the voting.
+    
+    Returns:
+        dict: The voting data including options and author information.
+    """
     try:
-        # Fetch voting details
         voting_doc = db.collection("votings").document(voting_id).get()
         if not voting_doc.exists:
             raise ValueError("Nie znaleziono głosowania!")
@@ -233,18 +263,16 @@ def fetch_vote_data(voting_id):
         voting_data = voting_doc.to_dict()
         voting_data["id"] = voting_id
 
-        # Fetch options for the voting
         options_query = db.collection("options").where("voting_id", "==", voting_doc.reference)
         options = [
             {
-                "id": option.id,  # Option's Firestore document ID
-                "value": option.to_dict()["option"]  # Option's name
+                "id": option.id, 
+                "value": option.to_dict()["option"]  
             }
             for option in options_query.stream()
         ]
         voting_data["options"] = options
 
-        # Fetch author name from author_ref
         author_ref = voting_data.get("author_ref")
         if author_ref:
             author_doc = author_ref.get()
@@ -252,12 +280,11 @@ def fetch_vote_data(voting_id):
         else:
             voting_data["author_name"] = "Nieznany autor"
 
-        # Calculate voting status (votes cast / total users)
         votes_query = db.collection("votes").where("voting_ref", "==", voting_doc.reference)
         votes = [vote.to_dict() for vote in votes_query.stream()]
 
-        total_votes = len(votes)  # Total users associated with this voting
-        votes_cast = sum(1 for vote in votes if "option_ref" in vote)  # Votes with `option_ref` present
+        total_votes = len(votes) 
+        votes_cast = sum(1 for vote in votes if "option_ref" in vote)  
         voting_data["votes_status"] = f"{votes_cast}/{total_votes}"
 
         return voting_data
@@ -267,26 +294,34 @@ def fetch_vote_data(voting_id):
 
 
 def save_vote(user_id, voting_id, selected_option_id):
-    """Save the user's vote in Firestore."""
+    """
+    Save the user's vote in Firestore.
+
+    This function checks if the user has already voted in a particular voting session. 
+    If the user has voted, it updates their existing vote with the selected option.
+    Otherwise, it creates a new vote entry for the user.
+
+    Parameters:
+        user_id (str): The ID of the user casting the vote.
+        voting_id (str): The ID of the voting session.
+        selected_option_id (str): The ID of the selected voting option.
+    
+    Returns:
+        None
+    """
     try:
-        # Pobierz referencję użytkownika
         user_ref = db.collection("users").document(user_id)
 
-        # Pobierz referencję głosowania
         voting_ref = db.collection("votings").document(voting_id)
 
-        # Pobierz referencję do opcji na podstawie jej ID
         option_ref = db.collection("options").document(selected_option_id)
 
-        # Sprawdź, czy użytkownik już zagłosował
         existing_vote_query = db.collection("votes").where("user_ref", "==", user_ref).where("voting_ref", "==", voting_ref)
         existing_vote = [doc for doc in existing_vote_query.stream()]
         
         if existing_vote:
-            # Zaktualizuj istniejący głos
             existing_vote[0].reference.update({"option_ref": option_ref})
         else:
-            # Dodaj nowy głos
             db.collection("votes").add({
                 "user_ref": user_ref,
                 "voting_ref": voting_ref,
@@ -300,13 +335,21 @@ def save_vote(user_id, voting_id, selected_option_id):
 
 
 def get_user_data(user_id):
-    """Pobiera dane użytkownika z Firestore na podstawie user_id."""
+    """
+    Fetch user data from Firestore based on the provided user ID.
+
+    Parameters:
+        user_id (str): The ID of the user whose data is being fetched.
+
+    Returns:
+        dict: A dictionary containing the user's data, or None if the user doesn't exist.
+    """
     try:
         user_ref = db.collection("users").document(user_id)
         user_doc = user_ref.get()
         
         if user_doc.exists:
-            return user_doc.to_dict()  # Zwraca dane użytkownika jako słownik
+            return user_doc.to_dict()  
         else:
             return None
     except Exception as e:
@@ -315,6 +358,16 @@ def get_user_data(user_id):
     
 
 def get_voting_details(voting_id):
+    """
+    Retrieve details of a specific voting session, including the number of votes cast and total users.
+
+    Parameters:
+        voting_id (str): The ID of the voting session.
+
+    Returns:
+        dict: A dictionary containing the title, deadline, author, number of votes cast, 
+              and total number of users in the voting session.
+    """
     db = firestore.client()
     voting_doc = db.collection("votings").document(voting_id).get()
     votes_cast, total_users = fetch_vote_stats(voting_id)
@@ -323,69 +376,94 @@ def get_voting_details(voting_id):
         return {
             "title": voting_data["title"],
             "deadline": voting_data["deadline"],
-            "author": voting_data["author_ref"],  # Możesz zamienić author_ref na nazwisko, jeśli potrzebujesz dodatkowego zapytania
-            "votes_cast": votes_cast,  # Liczba oddanych głosów
-            "total_users": total_users  # Liczba użytkowników
+            "author": voting_data["author_ref"],  
+            "votes_cast": votes_cast,  
+            "total_users": total_users  
         }
     return {}
 
 
 
 def get_voting_results(voting_id):
-    voting_ref = db.collection("votings").document(voting_id)  # Utwórz referencję na dokument głosowania
+    """
+    Fetch the voting results, counting votes for each option and determining the winner.
 
-    # Pobierz wszystkie opcje związane z danym głosowaniem
+    Parameters:
+        voting_id (str): The ID of the voting session.
+
+    Returns:
+        list: A list of dictionaries containing the candidate name, votes received, 
+              percentage of votes, and background color for each option.
+    """
+    voting_ref = db.collection("votings").document(voting_id)  
+
     options_ref = db.collection("options").where("voting_id", "==", voting_ref)
     options_docs = options_ref.stream()
 
-    # Pobierz wszystkie głosy związane z danym głosowaniem
     votes_ref = db.collection("votes").where("voting_ref", "==", voting_ref)
     votes_docs = votes_ref.stream()
 
-    # Zlicz głosy na każdą opcję
     vote_counts = {}
     total_votes = 0
 
     for vote in votes_docs:
         vote_data = vote.to_dict()
-        option_ref = vote_data.get("option_ref")  # Pobierz referencję na opcję
+        option_ref = vote_data.get("option_ref")  
         if option_ref:
-            option_id = option_ref.id  # ID opcji, na którą oddano głos
+            option_id = option_ref.id  
             vote_counts[option_id] = vote_counts.get(option_id, 0) + 1
             total_votes += 1
 
-    # Przygotuj wyniki
     results = []
-    max_votes = max(vote_counts.values(), default=0)  # Największa liczba głosów dla wygranych opcji
+    max_votes = max(vote_counts.values(), default=0)  
 
     for option in options_docs:
         option_data = option.to_dict()
         option_id = option.id
-        votes_for_option = vote_counts.get(option_id, 0)  # Liczba głosów oddanych na tę opcję
+        votes_for_option = vote_counts.get(option_id, 0)  
         percentage = (votes_for_option / total_votes * 100) if total_votes > 0 else 0
 
-        # Ustaw kolor tła dla wygranych opcji
         bg_color = "#99ff99" if votes_for_option == max_votes else "#ff9999"
 
         results.append({
-            "candidate": option_data["option"],  # Nazwa opcji (np. imię i nazwisko kandydata)
-            "votes": votes_for_option,  # Liczba głosów
-            "percentage": f"{percentage:.2f}%",  # Procentowy udział głosów
-            "bg": bg_color  # Kolor tła
+            "candidate": option_data["option"],
+            "votes": votes_for_option, 
+            "percentage": f"{percentage:.2f}%",  
+            "bg": bg_color  
         })
 
     return results
 
 
 def check_email_exists(email):
-    """Sprawdza, czy użytkownik z danym adresem e-mail istnieje w bazie."""
+    """
+    Check if a user with the given email address exists in the Firestore database.
+
+    Parameters:
+        email (str): The email address to search for.
+
+    Returns:
+        bool: True if a user with the email exists, otherwise False.
+    """
     db = firestore.client()
     users_ref = db.collection("users")
     existing_user = users_ref.where("email", "==", email).get()
     return len(existing_user) > 0
 
 def add_new_user_to_db(name, email, hashed_password, phone, role):
-    """Dodaje nowego użytkownika do bazy danych."""
+    """
+    Add a new user to the Firestore database with the provided details.
+
+    Parameters:
+        name (str): The name of the user.
+        email (str): The email address of the user.
+        hashed_password (str): The hashed password of the user.
+        phone (str): The phone number of the user.
+        role (str): The role of the user (e.g., 'admin', 'user').
+
+    Returns:
+        None
+    """
     db = firestore.client()
     users_ref = db.collection("users")
     new_user = {
@@ -398,7 +476,13 @@ def add_new_user_to_db(name, email, hashed_password, phone, role):
     users_ref.add(new_user)
 
 def get_users():
-    users_ref = db.collection('users')  # Kolekcja użytkowników
+    """
+    Retrieve a list of all users from the Firestore database.
+
+    Returns:
+        list: A list of dictionaries containing user names, roles, and document IDs.
+    """
+    users_ref = db.collection('users')  
     docs = users_ref.stream()
 
     users = []
@@ -407,13 +491,20 @@ def get_users():
         users.append({
             "name": user_data["name"],
             "role": user_data["role"],
-            "id": doc.id  # Dodanie ID dokumentu
+            "id": doc.id  
         })
     return users
 
-# 2. Funkcja usuwająca użytkownika
 def delete_user(user_id):
+    """
+    Delete a user from the Firestore database by user ID.
+
+    Parameters:
+        user_id (str): The ID of the user to be deleted.
+
+    Returns:
+        None
+    """
     user_ref = db.collection('users').document(user_id)
     user_ref.delete()
     print(f"Użytkownik o ID {user_id} został usunięty.")
-    # usuwanie kaskadowe nie jest potrzeebne

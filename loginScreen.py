@@ -4,22 +4,31 @@ from firebase_communication import login_user
 import bcrypt
 
 def show_login_screen(root, app_controller):
-    """Ekran logowania."""
+    """
+    Displays the login screen.
+
+    Args:
+        root (tk.Tk): The main application container.
+        app_controller (AppController): The application controller for managing screen transitions.
+    """
     def on_login_click():
+        """
+        Handles the user login action when the button is clicked.
+        Retrieves data from the input fields and passes it to the Firebase login function.
+        """
         email = email_entry.get()
         password = password_entry.get()
-        print(bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8'))
-        print("TUTAJ")
-        if email and password:
-            login_user(email, password, app_controller)  # Pass app_controller to handle screen switching
 
+        if email and password:
+            login_user(email, password, app_controller)
         else:
             messagebox.showwarning("Błąd", "Uzupełnij wszystkie pola.")
 
-    # Clear the current window
+    # Clear existing widgets in the main container
     for widget in root.winfo_children():
         widget.destroy()
 
+    # Create login screen elements
     tk.Label(root, text="Zaloguj się", font=("Arial", 20, "bold"), bg="#d9b3ff", fg="black").pack(pady=10)
     tk.Label(root, text="E-mail", bg="#d9b3ff", fg="black").pack(pady=5)
     email_entry = tk.Entry(root, width=30)

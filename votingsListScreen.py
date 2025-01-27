@@ -4,7 +4,18 @@ from firebase_communication import fetch_votes_from_db, fetch_user_vote_status
 from datetime import datetime
 
 def create_rounded_button(canvas, x, y, text, command, bg_color, text_color):
-    """Creates a rounded button on a canvas."""
+    """
+    Creates a rounded button on a canvas.
+
+    Parameters:
+        canvas (tk.Canvas): The canvas to draw the button on.
+        x (int): The x-coordinate of the top-left corner of the button.
+        y (int): The y-coordinate of the top-left corner of the button.
+        text (str): The text to be displayed on the button.
+        command (function): The function to be called when the button is clicked.
+        bg_color (str): The background color of the button.
+        text_color (str): The text color on the button.
+    """
     radius = 20  # Corner radius
     canvas.create_arc(x, y, x + 2 * radius, y + 2 * radius, start=90, extent=90, fill=bg_color, outline="")
     canvas.create_arc(x + 200 - 2 * radius, y, x + 200, y + 2 * radius, start=0, extent=90, fill=bg_color, outline="")
@@ -17,28 +28,26 @@ def create_rounded_button(canvas, x, y, text, command, bg_color, text_color):
     canvas.tag_bind(canvas.create_rectangle(x, y, x + 200, y + 60, outline="", fill=""), "<Button-1>", command)
 
 def populate_vote_list(frame, votes, app_controller):
-    """Populates the frame with voting options as buttons."""
+    """
+    Populates the frame with voting options as buttons.
+
+    Parameters:
+        frame (tk.Frame): The frame to populate with vote buttons.
+        votes (list): List of vote data dictionaries.
+        app_controller (AppController): The app controller managing the app state.
+    """
     for i, vote in enumerate(votes):
         # Check if the voting is assigned to the logged-in user
-        print(f"voting{vote}")
         user_vote_status = fetch_user_vote_status(vote['id'], app_controller.userId)
 
         # Check if the voting has ended
         voting_end_date = vote['deadline']
+        voting_end_date = datetime(year=int(voting_end_date[-4:]), month=int(voting_end_date[-7:-5]), day=int(voting_end_date[-10:-8])) 
 
-        print(voting_end_date)
-        print(type(voting_end_date))
-
-
-        voting_end_date = datetime(year=int(voting_end_date[-4:]), month=int(voting_end_date[-7:-5]), day=int(voting_end_date[-10:-8]))        # Możesz teraz używać voting_end_date do dalszych operacji, np. porównań lub formatowania
-        # formatted_deadline  = voting_end_date.strftime('%Y-%m-%d %H:%M:%S')
         current_date = datetime.now()
-        print(current_date)
         
         command = None
-    
 
-        print(f"REMINDER: {app_controller.isSettingUpReminder}")
         if user_vote_status and 'option_ref' in user_vote_status:  # If user has voted
             bg_color = "#bf80ff"  # Purple for voted
             if app_controller.isSettingUpReminder:
@@ -66,10 +75,14 @@ def populate_vote_list(frame, votes, app_controller):
         button.pack(fill="x", padx=5, pady=2)
 
 def on_vote_click(vote, app_controller):
-    """Handle the vote click, navigate to the voting screen."""
-    print(f"Wybrano: {vote['id']}")
+    """
+    Handle the vote click, navigate to the voting screen.
+
+    Parameters:
+        vote (dict): The selected vote data.
+        app_controller (AppController): The app controller managing the app state.
+    """
     app_controller.chosenVotingId = vote['id']
-    # Here you can switch to another screen, for example:
     if app_controller.isSettingUpReminder:
         app_controller.switch_to("reminderConfig")
     elif app_controller.isShowingResults:
@@ -78,8 +91,13 @@ def on_vote_click(vote, app_controller):
         app_controller.switch_to("voteDetails")
 
 def show_votings_list_screen(root, app_controller):
-    """Votings list screen."""
+    """
+    Displays the voting list screen.
 
+    Parameters:
+        root (tk.Tk): The root window of the Tkinter app.
+        app_controller (AppController): The app controller managing the app state.
+    """
     # Clear the current window
     for widget in root.winfo_children():
         widget.destroy()
