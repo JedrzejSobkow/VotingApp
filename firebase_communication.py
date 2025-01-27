@@ -20,7 +20,7 @@ def login_user(email, password, app_controller):
         user_data = None
         for user in query:
             user_data = user.to_dict()
-            print(user_data)
+            # print(user_data)
 
         if user_data and "passwordHash" in user_data:
             stored_password_hash = user_data["passwordHash"]
@@ -396,19 +396,24 @@ def get_voting_results(voting_id):
               percentage of votes, and background color for each option.
     """
     voting_ref = db.collection("votings").document(voting_id)  
+    # print(voting_ref)
 
     options_ref = db.collection("options").where("voting_id", "==", voting_ref)
     options_docs = options_ref.stream()
-
+    # print(f"options {options_docs}")
     votes_ref = db.collection("votes").where("voting_ref", "==", voting_ref)
     votes_docs = votes_ref.stream()
-
+    # print(votes_docs)
     vote_counts = {}
     total_votes = 0
 
     for vote in votes_docs:
         vote_data = vote.to_dict()
+        # print("VOOTEDATA")
+        # print(vote_data)
         option_ref = vote_data.get("option_ref")  
+        # print("OPPTIONREF")
+        # print(option_ref)
         if option_ref:
             option_id = option_ref.id  
             vote_counts[option_id] = vote_counts.get(option_id, 0) + 1
@@ -424,6 +429,7 @@ def get_voting_results(voting_id):
         percentage = (votes_for_option / total_votes * 100) if total_votes > 0 else 0
 
         bg_color = "#99ff99" if votes_for_option == max_votes else "#ff9999"
+
 
         results.append({
             "candidate": option_data["option"],
@@ -507,4 +513,4 @@ def delete_user(user_id):
     """
     user_ref = db.collection('users').document(user_id)
     user_ref.delete()
-    print(f"Użytkownik o ID {user_id} został usunięty.")
+    # print(f"Użytkownik o ID {user_id} został usunięty.")
