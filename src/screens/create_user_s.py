@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import ttk
 from tkinter import messagebox
 import bcrypt
-from firebase_communication import check_email_exists, add_new_user_to_db
+from ..database.firebase_communication import check_email_exists, add_new_user_to_db
 
 def show_create_user_screen(container, app_controller):
     """

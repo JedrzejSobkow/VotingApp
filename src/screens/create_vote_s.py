@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import messagebox, ttk
 from tkcalendar import Calendar
-from firebase_communication import create_voting, get_users  # Import functions for database communication.
+from ..database.firebase_communication import create_voting, get_users  # Import functions for database communication.
 
 def add_question(frame, answers_entries):
     """

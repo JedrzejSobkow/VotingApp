@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import Canvas, Scrollbar
-from firebase_communication import fetch_votes_from_db, fetch_user_vote_status
+from ..database.firebase_communication import fetch_votes_from_db, fetch_user_vote_status
 from datetime import datetime
 
 def create_rounded_button(canvas, x, y, text, command, bg_color, text_color):
@@ -98,7 +98,6 @@ def show_votings_list_screen(root, app_controller):
         root (tk.Tk): The root window of the Tkinter app.
         app_controller (AppController): The app controller managing the app state.
     """
-    # Clear the current window
     for widget in root.winfo_children():
         widget.destroy()
 
@@ -118,7 +117,6 @@ def show_votings_list_screen(root, app_controller):
     canvas.pack(side="left", fill="both", expand=True)
     scrollbar.pack(side="right", fill="y")
 
-    # Fetch the voting data from Firestore and populate the list
     if app_controller.isSettingUpReminder or app_controller.isShowingResults:
         votes_data = fetch_votes_from_db(app_controller.userId, True)
     else:

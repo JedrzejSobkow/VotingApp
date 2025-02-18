@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 from tkinter import messagebox
-from firebase_communication import get_users, delete_user
+from ..database.firebase_communication import get_users, delete_user
 
 def show_manage_users_screen(container, app_controller):
     """

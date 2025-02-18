@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import messagebox
-from firebase_communication import login_user
+from ..database.firebase_communication import login_user
 import bcrypt
 
 def show_login_screen(root, app_controller):

@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import StringVar, messagebox
-from firebase_communication import fetch_vote_data, save_vote, get_user_data
+from ..database.firebase_communication import fetch_vote_data, save_vote, get_user_data
 
 
 

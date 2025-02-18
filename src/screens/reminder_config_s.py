@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
 from tkcalendar import DateEntry
-from firebase_communication import update_voting_with_reminder
+from ..database.firebase_communication import update_voting_with_reminder
 
 def show_reminder_config_screen(root, app_controller):
     """

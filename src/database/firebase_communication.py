@@ -3,7 +3,7 @@ from firebase_admin import credentials, firestore
 import bcrypt
 from tkinter import messagebox
 
-cred = credentials.Certificate("credentials.json")
+cred = credentials.Certificate("config/credentials.json")
 firebase_admin.initialize_app(cred)
 db = firestore.client()
 

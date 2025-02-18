@@ -1,13 +1,5 @@
 import tkinter as tk
-from loginScreen import show_login_screen
-from mainScreen import show_main_screen
-from votingsListScreen import show_votings_list_screen
-from voteDetailsScreen import show_vote_screen
-from createVoteScreen import show_create_vote_screen
-from reminderConfigScreen import show_reminder_config_screen
-from viewResultsScreen import show_poll_result_screen
-from userManagementScreen import show_manage_users_screen
-from createUserScreen import show_create_user_screen
+
 
 class AppController:
     """
@@ -67,15 +59,3 @@ class AppController:
         self.switch_to("login")
         self.root.mainloop()
 
-if __name__ == "__main__":
-    app = AppController()
-    app.add_screen("login", show_login_screen)
-    app.add_screen("main", show_main_screen)
-    app.add_screen("votingsList", show_votings_list_screen)
-    app.add_screen("voteDetails", show_vote_screen)
-    app.add_screen("createVoting", show_create_vote_screen)
-    app.add_screen("reminderConfig", show_reminder_config_screen)
-    app.add_screen("pollResults", show_poll_result_screen)
-    app.add_screen("userManagement", show_manage_users_screen)
-    app.add_screen("userCreation", show_create_user_screen)
-    app.start()

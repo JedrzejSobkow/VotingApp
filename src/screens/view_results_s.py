@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
-from firebase_communication import get_voting_details, get_voting_results
+from ..database.firebase_communication import get_voting_details, get_voting_results
 
 def show_poll_result_screen(container, app_controller):
     """
